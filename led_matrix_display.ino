@@ -1,5 +1,6 @@
 
 #include <SPI.h>
+#include <I2C_RTC.h>
 
 #define CS 7
 //CS pin 7
@@ -29,19 +30,19 @@ class LedMatrix {
     uint16_t cs = 7;
   public:
     void send_data(uint8_t address, uint8_t value){
-      digitalWrite(CS, LOW);//tell chip data is transfering
+      digitalWrite(cs, LOW);//tell chip data is transfering
       SPI.transfer(address);
       SPI.transfer(value);
-      digitalWrite(CS,HIGH);//tell chip data has stopped
+      digitalWrite(cs,HIGH);//tell chip data has stopped
     }
     //constructor
-    LedMatrix(){
-      //send_data(DISPLAY_TEST,0x00);//normal operation
-      
+    LedMatrix(uint16_t cs_pin){
+      cs = cs_pin;
     }
     void setup(){
       send_data(SCAN_LIMIT,0x07); //display all dots
       send_data(DECODE_MODE,0x00); //directly address pixels
+      on();
     }
     void off(){
       send_data(SHUTDOWN,0x00);
@@ -63,32 +64,29 @@ class LedMatrix {
       send_data(column+1,bitmask);      
     }
   };
-LedMatrix led_matrix;
+static LedMatrix led_matrix(7);
+static DS1307 RTC;
 void setup() {
+  //================== init the led matrixes ============
   pinMode(CS,OUTPUT);
   SPI.setBitOrder(MSBFIRST); //big endian
   SPI.begin();
   Serial.begin(9600);
-  while (!Serial){
-    ;
-  }
   Serial.println("Starting");
-  led_matrix = LedMatrix();
+  delay(100);
   led_matrix.on();
   led_matrix.setup();
   led_matrix.send_data(INTENSITY,0x00);//brightness
   led_matrix.fill_display();
-  delay(500);
-  /*
-  ####
-  ####
-  ##  ##
-  ##  ##
-  ## #
-  ####
-  ##  ##
-  ##  ##
-  */
+  //================== init the rtc module ===============
+  if (RTC.begin() == false){
+    Serial.println("RTC module not found");
+  }
+  if (!RTC.isRunning()){
+    Serial.println("starting rtc module clock");
+    RTC.startClock();
+  }
+  //=============== display the letter "R" ================
   led_matrix.set_column(0,R_FULL);
   led_matrix.set_column(1,R_FULL);
   led_matrix.set_column(2,R_1 | R_2 | R_5 | R_6);
@@ -101,10 +99,8 @@ void setup() {
 }
 
 void loop() {
-  for (;;){
-    led_matrix.empty_display();
-    delay(500);
-    led_matrix.fill_display();
-    delay(500);
-  }
+  //=================== code for rtc module ==================
+  Serial.print(RTC.getSeconds());
+  Serial.println(" seconds"); 
+  //=================== code for led matrix ==================
 }
