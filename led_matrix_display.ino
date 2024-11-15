@@ -31,7 +31,7 @@ class LedMatrix {
     uint8_t matrix_index = 0;
   public:
     void send_data(uint8_t address, uint8_t value){
-      digitalWrite(cs, HIGH);//tell chip data is transfering
+      digitalWrite(cs, LOW);//tell chip data is transfering
       //data cascades through 16 bits at a time
       //when more then 16 bits are sent, the first bits start being pushed out to the next chip
       // c2       c1
@@ -45,7 +45,7 @@ class LedMatrix {
         SPI.transfer(0x00);
       }
       //latch data
-      digitalWrite(cs, LOW);
+      //digitalWrite(cs, LOW);
       digitalWrite(cs,HIGH);
       //delay(2);
     }
@@ -57,6 +57,10 @@ class LedMatrix {
 
     }
     void setup(){
+      //clean out the registers a little
+      digitalWrite(cs, LOW);
+      digitalWrite(cs, HIGH);
+      delay(100);
       send_data(SCAN_LIMIT,0x07); //display all dots
       send_data(DECODE_MODE,0x00); //directly address pixels
       on();
@@ -80,18 +84,18 @@ class LedMatrix {
     void set_column(uint8_t column,uint8_t bitmask){ //or together R_* to make a column
       send_data(column+1,bitmask);      
     }
-    void display_number(){
-      led_matrix_1.set_column(0,R_FULL);
-      led_matrix_1.set_column(1,R_FULL);
-      led_matrix_1.set_column(2,R_1 | R_2 | R_5 | R_6);
-      led_matrix_1.set_column(3,R_1 | R_2 | R_5 | R_6);
-      led_matrix_1.set_column(4,R_3 | R_4 | R_7 | R_8);
-      led_matrix_1.set_column(5,R_3 | R_4 | R_7 | R_8);
-      led_matrix_1.set_column(6,R_EMPTY);
-      led_matrix_1.set_column(7,R_EMPTY);
+    void display_number(uint8_t number){
+      set_column(0,R_FULL);
+      set_column(1,R_FULL);
+      set_column(2,R_1 | R_2 | R_5 | R_6);
+      set_column(3,R_1 | R_2 | R_5 | R_6);
+      set_column(4,R_3 | R_4 | R_7 | R_8);
+      set_column(5,R_3 | R_4 | R_7 | R_8);
+      set_column(6,R_EMPTY);
+      set_column(7,R_EMPTY);
     }
   };
-static LedMatrix led_matrix_1(7,1);
+static LedMatrix led_matrix_1(7,2);
 static LedMatrix led_matrix_2(7,1);
 static LedMatrix led_matrix_3(7,2);
 static LedMatrix led_matrix_4(7,3);
@@ -119,11 +123,13 @@ void setup() {
   }
   Serial.println("starting displays...");
   //=============== display the letter "R" ================
+  led_matrix_1.display_number(0);
+  //led_matrix_2.display_number(0);
   delay(500);
 }
 
 void loop() {
-  delay(100);
+  delay(1000);
   //=================== code for rtc module ==================
   Serial.print(RTC.getHours());
   Serial.print(" : ");
