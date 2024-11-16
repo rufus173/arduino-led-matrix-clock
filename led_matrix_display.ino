@@ -15,8 +15,16 @@
 #define DISPLAY_TEST 16
 
 const int number_matrix_format[][8] = {
-  {0x00,0x7e,0xc3,0x81,0x81,0xc3,0x7e,0x00},
-  {0x01,0x01,0xff,0xff,0x81,0x00,0x00,0x00},
+  {0x00,0x7e,0xc3,0x81,0x81,0xc3,0x7e,0x00}, //0
+  {0x01,0x01,0xff,0xff,0x81,0x41,0x21,0x11}, //1
+  {0x00,0x61,0x91,0x89,0x85,0x83,0x41,0x00}, //2
+  {0x00,0x6e,0x91,0x91,0x91,0x91,0x91,0x00}, //3
+  {0x00,0x08,0x08,0xff,0x48,0x28,0x18,0x08}, //4
+  {0x00,0x8e,0x91,0x91,0x91,0x91,0xf1,0x00}, //5
+  {0x00,0x8e,0x91,0x91,0x91,0xcb,0x7e,0x00}, //6
+  {0x80,0xc0,0xa0,0x90,0x88,0x84,0x82,0x81}, //7
+  {0x00,0x6e,0x91,0x91,0x91,0x91,0x6e,0x00}, //8
+  {0x00,0x6f,0x90,0x90,0x90,0x90,0x60,0x00}, //9
   };
 
 class LedMatrix {
@@ -32,16 +40,19 @@ class LedMatrix {
       // c2       c1
       // 00000000 01010001 << 10000001
       // 01010001 10000001
+      for (int i = 0; i < 4; i++){
       SPI.transfer(address);
       SPI.transfer(value);
-      for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
+      }
+      /*for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
         // "push" data through to correct chip
         SPI.transfer(0x00);
         SPI.transfer(0x00);
-      }
+      }*/
       //latch data
       //digitalWrite(cs, LOW);
       digitalWrite(cs,HIGH);
+      delay(5);
       //delay(2);
     }
     //constructor
@@ -50,9 +61,7 @@ class LedMatrix {
       matrix_count = p_matrix_count;
     }
     void begin(uint8_t matrix_index){
-      SPI.begin();
-      SPI.setBitOrder(MSBFIRST); //big endian
-      delay(100);
+      send_data(INTENSITY,0x0f, matrix_index);
       send_data(SCAN_LIMIT,0x07, matrix_index); //display all dots
       send_data(DECODE_MODE,0x00, matrix_index); //directly address pixels
       on(matrix_index);
@@ -73,12 +82,17 @@ class LedMatrix {
       }
     }
   };
-static LedMatrix led_matrix(7,4);
+static LedMatrix led_matrix(8,4);
 static DS1307 RTC;
 void setup() {
+  SPI.begin();
+  SPI.setBitOrder(MSBFIRST); //big endian
+  SPI.setClockDivider(SPI_CLOCK_DIV128);
+  delay(100);
   //================== init the led matrixes ============
   pinMode(CS,OUTPUT);
   led_matrix.begin(0);
+  led_matrix.begin(1);
   Serial.begin(9600);
   Serial.println("Starting");
   //================== init the rtc module ===============
@@ -94,14 +108,20 @@ void setup() {
 }
 
 void loop() {
-  led_matrix.display_number(0,0);
-  delay(500);
-  led_matrix.display_number(1,1);
-  delay(500);
+  for (int n = 0;n < 10;n++){
+    led_matrix.display_number(9,0);
+    delay(500);
+    /*led_matrix.display_number(n,1);
+    delay(500);
+    led_matrix.display_number(n,2);
+    delay(500);
+    led_matrix.display_number(n,3);
+    delay(500);*/
+  }
   //=================== code for rtc module ==================
-  Serial.print(RTC.getHours());
+  /*Serial.print(RTC.getHours());
   Serial.print(" : ");
-  Serial.println(RTC.getMinutes());
+  Serial.println(RTC.getMinutes());*/
   // set the time from a unix timestamp over serial
   if (Serial.available() > 0){
     String buffer = Serial.readString();
