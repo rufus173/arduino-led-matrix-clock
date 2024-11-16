@@ -81,6 +81,8 @@ void setup() {
   pinMode(CS,OUTPUT);
   led_matrix.begin(0);
   led_matrix.begin(1);
+  led_matrix.begin(2);
+  led_matrix.begin(3);
   Serial.begin(9600);
   Serial.println("Starting");
   //================== init the rtc module ===============
@@ -98,6 +100,8 @@ void loop() {
   led_matrix.display_number(5,0);
   delay(500);
   led_matrix.display_number(4,1);
+  delay(500);
+  led_matrix.display_number(3,2);
   delay(500);
   //led_matrix.display_number(1,1);
   //delay(500);
