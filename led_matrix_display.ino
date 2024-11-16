@@ -14,6 +14,12 @@
 #define SHUTDOWN 12
 #define DISPLAY_TEST 16
 
+      //data cascades through 16 bits at a time
+      //when more then 16 bits are sent, the first bits start being pushed out to the next chip
+      // c2       c1
+      // 00000000 01010001 << 10000001
+      // 01010001 10000001
+
 const int number_matrix_format[][8] = {
   {0x00,0x7e,0xc3,0x81,0x81,0xc3,0x7e,0x00}, //0
   {0x01,0x01,0xff,0xff,0x81,0x41,0x21,0x11}, //1
@@ -34,24 +40,9 @@ class LedMatrix {
   public:
     void send_data(uint8_t address, uint8_t value,uint8_t matrix_index){
       digitalWrite(cs, LOW);//tell chip data is transfering
-      //digitalWrite(cs, HIGH);
-      //data cascades through 16 bits at a time
-      //when more then 16 bits are sent, the first bits start being pushed out to the next chip
-      // c2       c1
-      // 00000000 01010001 << 10000001
-      // 01010001 10000001
-      for (int i = 0; i < 4; i++){
       SPI.transfer(address);
       SPI.transfer(value);
-      }
-      /*for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
-        // "push" data through to correct chip
-        SPI.transfer(0x00);
-        SPI.transfer(0x00);
-      }*/
-      //latch data
-      //digitalWrite(cs, LOW);
-      digitalWrite(cs,HIGH);
+      digitalWrite(cs,HIGH); //latch data
       delay(5);
       //delay(2);
     }
@@ -91,8 +82,9 @@ void setup() {
   delay(100);
   //================== init the led matrixes ============
   pinMode(CS,OUTPUT);
+  digitalWrite(CS,HIGH);
   led_matrix.begin(0);
-  led_matrix.begin(1);
+  //led_matrix.begin(1);
   Serial.begin(9600);
   Serial.println("Starting");
   //================== init the rtc module ===============
@@ -109,19 +101,13 @@ void setup() {
 
 void loop() {
   for (int n = 0;n < 10;n++){
-    led_matrix.display_number(9,0);
+    led_matrix.display_number(1,0);
     delay(500);
-    /*led_matrix.display_number(n,1);
-    delay(500);
-    led_matrix.display_number(n,2);
-    delay(500);
-    led_matrix.display_number(n,3);
-    delay(500);*/
   }
   //=================== code for rtc module ==================
-  /*Serial.print(RTC.getHours());
+  Serial.print(RTC.getHours());
   Serial.print(" : ");
-  Serial.println(RTC.getMinutes());*/
+  Serial.println(RTC.getMinutes());
   // set the time from a unix timestamp over serial
   if (Serial.available() > 0){
     String buffer = Serial.readString();
