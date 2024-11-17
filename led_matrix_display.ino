@@ -40,13 +40,23 @@ class LedMatrix {
   public:
     void send_data(uint8_t address, uint8_t value,uint8_t matrix_index){
       digitalWrite(cs, LOW);//tell chip data is transfering
+      //flush all with no-ops
+      for (int i = 0;i < 4;i++){ //matricies indexed from 0
+        // "push" data through to correct chip
+        delay(3);
+        SPI.transfer(0xf0); //the 0 in f0 is the noop register
+        SPI.transfer(0xff);
+      }
+      delay(3);
       SPI.transfer(address);
       SPI.transfer(value);
       for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
         // "push" data through to correct chip
-        SPI.transfer(0x00);
-        SPI.transfer(0x00);
+        //delay(3);
+        SPI.transfer(0xf0); //the 0 in f0 is the noop register
+        SPI.transfer(0xff);
       }
+      delay(3);
       digitalWrite(cs,HIGH);
     }
     //constructor
@@ -97,12 +107,16 @@ void setup() {
   Serial.println("starting displays...");
 }
 void loop() {
-  led_matrix.display_number(5,0);
+  static int n = 0;
+  led_matrix.display_number(n,0);
   delay(500);
-  led_matrix.display_number(4,1);
+  led_matrix.display_number(n+1,1);
   delay(500);
-  led_matrix.display_number(3,2);
+  led_matrix.display_number(n+2,2);
   delay(500);
+  led_matrix.display_number(n+3,3);
+  delay(500);
+  n++;
   //led_matrix.display_number(1,1);
   //delay(500);
   //=================== code for rtc module ==================
