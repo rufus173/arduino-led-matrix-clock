@@ -41,13 +41,12 @@ class LedMatrix {
     void send_data(uint8_t address, uint8_t value,uint8_t matrix_index){
       digitalWrite(cs, LOW);//tell chip data is transfering
       //flush all with no-ops
-      for (int i = 0;i < 4;i++){ //matricies indexed from 0
-        // "push" data through to correct chip
+      for (int i = 0;i < 4;i++){
         delay(3);
         SPI.transfer(0xf0); //the 0 in f0 is the noop register
         SPI.transfer(0xff);
       }
-      delay(3);
+      delay(3); //data comes out after 16.5 clock cycles so this makes sure it can pass though propperly
       SPI.transfer(address);
       SPI.transfer(value);
       for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
@@ -57,6 +56,7 @@ class LedMatrix {
         SPI.transfer(0xff);
       }
       delay(3);
+      //give the data time to reach its destination
       digitalWrite(cs,HIGH);
     }
     //constructor
@@ -70,13 +70,17 @@ class LedMatrix {
       delay(100);
       send_data(SCAN_LIMIT,0x07, matrix_index); //display all dots
       send_data(DECODE_MODE,0x00, matrix_index); //directly address pixels
-      send_data(INTENSITY,0x0f,matrix_index);
+      send_data(INTENSITY,0x01,matrix_index);
       send_data(SHUTDOWN,0x01,matrix_index);
     }
     void set_column(uint8_t column,uint8_t bitmask, uint8_t matrix_index){ //or together R_* to make a column
       send_data(column+1,bitmask, matrix_index);      
     }
     void display_number(uint8_t number,uint8_t matrix_index){
+      if (number < 0 || number > 9){
+        //do nothing if number is out of bounds
+        return;
+      }
       for (uint8_t i = 0; i < 8; i++){
         set_column(i,number_matrix_format[number][i],matrix_index);
         delay(3);
@@ -110,8 +114,15 @@ void loop() {
   //led_matrix.display_number(1,1);
   //delay(500);
   //=================== code for rtc module ==================
-  int minutes = RTC.getMinutes();
-  int hours = RTC.getHours();
+  int minutes = 0;
+  int hours;
+  //read untill you get a coherent reading 
+  do {
+    minutes = RTC.getMinutes();
+  } while (minutes > 60 || minutes < 0);
+  do {
+    hours = RTC.getHours();
+  }while (hours > 25 || hours < 0);
   Serial.print(hours);
   Serial.print(" : ");
   Serial.println(minutes);
@@ -125,11 +136,8 @@ void loop() {
   }
   //=================== code for led matrix ==================
   led_matrix.display_number(minutes % 10,0);
-  delay(500);
   led_matrix.display_number(minutes / 10,1);
-  delay(500);
   led_matrix.display_number(hours % 10,2);
-  delay(500);
   led_matrix.display_number(hours / 10,3);
-  delay(30000); //only update every 30s
+  delay(10000); //only update every 30s
 }
