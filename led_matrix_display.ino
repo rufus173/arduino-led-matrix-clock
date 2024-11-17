@@ -107,22 +107,14 @@ void setup() {
   Serial.println("starting displays...");
 }
 void loop() {
-  static int n = 0;
-  led_matrix.display_number(n,0);
-  delay(500);
-  led_matrix.display_number(n+1,1);
-  delay(500);
-  led_matrix.display_number(n+2,2);
-  delay(500);
-  led_matrix.display_number(n+3,3);
-  delay(500);
-  n++;
   //led_matrix.display_number(1,1);
   //delay(500);
   //=================== code for rtc module ==================
-  Serial.print(RTC.getHours());
+  int minutes = RTC.getMinutes();
+  int hours = RTC.getHours();
+  Serial.print(hours);
   Serial.print(" : ");
-  Serial.println(RTC.getMinutes());
+  Serial.println(minutes);
   // set the time from a unix timestamp over serial
   if (Serial.available() > 0){
     String buffer = Serial.readString();
@@ -132,4 +124,12 @@ void loop() {
     RTC.setEpoch(timestamp);
   }
   //=================== code for led matrix ==================
+  led_matrix.display_number(minutes % 10,0);
+  delay(500);
+  led_matrix.display_number(minutes / 10,1);
+  delay(500);
+  led_matrix.display_number(hours % 10,2);
+  delay(500);
+  led_matrix.display_number(hours / 10,3);
+  delay(30000); //only update every 30s
 }
