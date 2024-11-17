@@ -115,7 +115,7 @@ void loop() {
   //delay(500);
   //=================== code for rtc module ==================
   int minutes = 0;
-  int hours;
+  int hours = 0;
   //read untill you get a coherent reading 
   do {
     minutes = RTC.getMinutes();
@@ -139,5 +139,5 @@ void loop() {
   led_matrix.display_number(minutes / 10,1);
   led_matrix.display_number(hours % 10,2);
   led_matrix.display_number(hours / 10,3);
-  delay(10000); //only update every 30s
+  delay(1000); //only update every 30s
 }
