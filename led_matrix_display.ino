@@ -51,7 +51,7 @@ class LedMatrix {
       SPI.transfer(value);
       for (int i = 0;i < matrix_index;i++){ //matricies indexed from 0
         // "push" data through to correct chip
-        //delay(3);
+        delay(3);
         SPI.transfer(0xf0); //the 0 in f0 is the noop register
         SPI.transfer(0xff);
       }
@@ -65,8 +65,6 @@ class LedMatrix {
       matrix_count = p_matrix_count;
     }
     void begin(uint8_t matrix_index){
-      SPI.begin();
-      SPI.setBitOrder(MSBFIRST); //big endian
       delay(100);
       send_data(SCAN_LIMIT,0x07, matrix_index); //display all dots
       send_data(DECODE_MODE,0x00, matrix_index); //directly address pixels
@@ -91,6 +89,8 @@ class LedMatrix {
 static LedMatrix led_matrix(7,4);
 static DS1307 RTC;
 void setup() {
+  SPI.begin();
+  SPI.setBitOrder(MSBFIRST); //big endian
   //================== init the led matrixes ============
   pinMode(CS,OUTPUT);
   led_matrix.begin(0);
@@ -111,6 +111,7 @@ void setup() {
   Serial.println("starting displays...");
 }
 void loop() {
+  static int cycle = 0;
   //led_matrix.display_number(1,1);
   //delay(500);
   //=================== code for rtc module ==================
@@ -139,5 +140,11 @@ void loop() {
   led_matrix.display_number(minutes / 10,1);
   led_matrix.display_number(hours % 10,2);
   led_matrix.display_number(hours / 10,3);
-  delay(1000); //only update every 30s
+  //delay
+  delay(1000); //only update every 1s
+  //reset displays every 10 cycles to allow hot swapping
+  led_matrix.begin(0);
+  led_matrix.begin(1);
+  led_matrix.begin(2);
+  led_matrix.begin(3);
 }
